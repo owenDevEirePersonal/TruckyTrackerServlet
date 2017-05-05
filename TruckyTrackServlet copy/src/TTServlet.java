@@ -76,7 +76,7 @@ public class TTServlet extends HttpServlet
 			break;
 			
 			case "getlocationswithin":
-				double inCentreLat = Double.parseDouble( request.getParameter("lat"));
+				double inCentreLat = Double.parseDouble(request.getParameter("lat"));
 				double inCentreLon = Double.parseDouble(request.getParameter("lon"));
 				double inRadius = Double.parseDouble(request.getParameter("radius"));
 				getLocationsWithin(request.getParameter("id"), inCentreLat, inCentreLon, inRadius);
@@ -149,7 +149,7 @@ public class TTServlet extends HttpServlet
 	         {
 	        	if(inName == null)
 	        	{
-	        		sql = "INSERT INTO ids VALUES (" + inID + ", " + inID + "'- Truck " + inID + "');";
+	        		sql = "INSERT INTO ids VALUES (" + inID + ", " + inID + "' - Truck " + inID + "');";
 	        		
 	        		//out.print("not exists with no name " + sql);
 	        	}
@@ -356,9 +356,13 @@ public class TTServlet extends HttpServlet
 	        	 obj.put("id", aID);
 	        	 obj.put("lat", returnLats.get(i));
 	        	 obj.put("lon", returnLons.get(i));
-	        	 obj.put("timestamp", returnTimeStamps.get(i));
+	        	 
 	        	 obj.put("Note1", returnNotes1.get(i));
 	        	 obj.put("Note2", returnNotes2.get(i));
+	        	 
+	        	 DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+	        	 obj.put("timestamp", format.format(returnTimeStamps.get(i)));
+	        	       	 
 	        	 jsonOut.add(obj);
 	        	 i++;
 	         }
@@ -462,7 +466,8 @@ public class TTServlet extends HttpServlet
 	        	 obj.put("id", aID);
 	        	 obj.put("lat", returnLats.get(i));
 	        	 obj.put("lon", returnLons.get(i));
-	        	 obj.put("timestamp", returnTimeStamps.get(i));
+	        	 DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+	        	 obj.put("timestamp", format.format(returnTimeStamps.get(i)));
 	        	 obj.put("Note1", returnNotes1.get(i));
 	        	 obj.put("Note2", returnNotes2.get(i));
 	        	 jsonOut.add(obj);
