@@ -438,7 +438,7 @@ public class TTServlet extends HttpServlet
 	         // Execute SQL query
 	         stmt = conn.createStatement();
 	         String sql;
-	         sql = "select * from locations where id=1 AND (lat < ("+ (inCentreLat + inRadius) +") AND lat > ("+ (inCentreLat - inRadius) +")) AND (lon < ("+ (inCentreLon + inRadius) +") AND lon > ("+ (inCentreLon - inRadius) +"));";
+	         sql = "select * from locations where id=" + inID + " AND (lat < ("+ (inCentreLat + inRadius) +") AND lat > ("+ (inCentreLat - inRadius) +")) AND (lon < ("+ (inCentreLon + inRadius) +") AND lon > ("+ (inCentreLon - inRadius) +"));";
 	         //out.println(sql);
 	         ResultSet rs = stmt.executeQuery(sql);
 
