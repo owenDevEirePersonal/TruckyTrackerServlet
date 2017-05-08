@@ -112,6 +112,8 @@ public class TTServlet extends HttpServlet
 	    Statement stmt = null;
 	    Connection conn = null;
 	    
+	    int count = 0;
+	    
 	    try
 	    {
 	         // Register JDBC driver
@@ -130,9 +132,11 @@ public class TTServlet extends HttpServlet
 	         Boolean idExists = false;
 	         
 
+
 	         // Extract data from result set
 	         while(rs.next())
 	         {
+	        	 count++;
 	            //Retrieve by column name
 	        	 //out.print("checking id " + rs.getInt("id"));
 	        	 int currentID = rs.getInt("id");
@@ -145,29 +149,54 @@ public class TTServlet extends HttpServlet
 	        	 }
 	         }
 	         
+	         //If id does not currently exist in ids table then add a new id
+	         //to the table and then return it to the driver which will then store the id as their app's new id.
 	         if(!idExists)
 	         {
+	        	inID = count + 1;
 	        	if(inName == null)
 	        	{
-	        		sql = "INSERT INTO ids VALUES (" + inID + ", " + inID + "' - Truck " + inID + "');";
+	        		//out.print(inID);
+	        		sql = "INSERT INTO ids VALUES (" + inID + ", '" + inID + " - Truck " + inID + "');";
 	        		
 	        		//out.print("not exists with no name " + sql);
 	        	}
 	        	else
 	        	{
 	        		inName = inName.replace("'", " ");
+	        		inName = inName.replace("_", " ");
 	        		//replaces any occurances of ' as ' marks the end and start of varchars in mysql and would disrupt the sql statement.
 	        	
-	        		sql = "INSERT INTO ids VALUES (" + inID + ", '" + inID + "- " + inName + "');";
+	        		sql = "INSERT INTO ids VALUES (" + inID + ", '" + inID + " - " + inName + "');";
 	        		//out.print("not exists " + sql);
 	        	}
 	        	stmt.executeUpdate(sql);
+	        	JSONArray jArray = new JSONArray();
+	        	JSONObject obj = new JSONObject();
+	        	obj.put("id", inID);
+	        	jArray.add(obj);
+	        	out.println(jArray);
+	         }
+	         //if id does exist, then update the ids table with the new name that was just entered on the app.
+	         else
+	         {
+	        	if(inName != null)
+		        {
+		        	inName = inName.replace("'", " ");
+		        	inName = inName.replace("_", " ");
+		        	//replaces any occurances of ' as ' marks the end and start of varchars in mysql and would disrupt the sql statement.
+		        
+		        	sql = "UPDATE ids SET name='" + inID + " - " + inName + "' WHERE id = " + inID + ";";
+		        	//out.print("not exists " + sql);
+		        }
+		        stmt.executeUpdate(sql);
 	         }
 	         
 	         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	         java.util.Date currentTimeStamp = new java.util.Date();
 
-	         sql = "INSERT INTO locations VALUES (" + inID + ", " + inLat + ", " + inLon + ", '" + dateFormat.format(currentTimeStamp) + "', '', '');";
+	         sql = "INSERT INTO locations (id, lat, lon, timestamp, Note1, Note2) VALUES (" + inID + ", " + inLat + ", " + inLon + ", '" + dateFormat.format(currentTimeStamp) + "', '', '');";
+	         //out.println(sql);
 	         stmt.executeUpdate(sql);
 	         //out.print("insert is " + sql);
 	         
