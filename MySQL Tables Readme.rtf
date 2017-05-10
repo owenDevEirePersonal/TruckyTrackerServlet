@@ -1,0 +1,65 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf820
+{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red255\green255\blue255;\red255\green0\blue0;
+}
+{\*\expandedcolortbl;;\csgray\c0;\csgray\c100000;\csgenericrgb\c100000\c0\c0;
+}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs22 \cf2 \cb3 \CocoaLigature0 Owens-MBP:bin owenryan$ ./mysql -u user -p\
+Enter password: \
+Welcome to the MySQL monitor.  Commands end with ; or \\g.\
+Your MySQL connection id is 314\
+Server version: 5.7.17 MySQL Community Server (GPL)\
+\
+Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.\
+\
+Oracle is a registered trademark of Oracle Corporation and/or its\
+affiliates. Other names may be trademarks of their respective\
+owners.\
+\
+Type 'help;' or '\\h' for help. Type '\\c' to clear the current input statement.\
+\
+mysql> CREATE DATABASE truckytrackDatabase\
+    -> ;\
+Query OK, 1 row affected (0.00 sec)\
+\
+\
+mysql> use truckytrackDatabase\
+Database changed\
+\
+\cf4 IDs table\
+Used to store a list of driver ids and their associated names.\cf2 \
+mysql> create table IDs(id int not null, name varchar (255));\
+Query OK, 0 rows affected (0.01 sec)\
+\
+\
+\cf4 Locations\
+Used to store the history of each drivers location updates, namely their id, latitude, longitude and the time the update was entered into the database.\cf2 \
+mysql> create table Locations(id INT, lat DOUBLE, lon DOUBLE, timestamp DATETIME);\
+Query OK, 0 rows affected (0.02 sec)\
+\
+\
+\
+\
+\
+\
+\cf4 KegKeys\
+Used to store the IDs on the top(full) and bottom(empty) of a keg. \cf2 \
+mysql> CREATE TABLE KegKeys(fullID VARCHAR(255) NOT NULL, emptyID VARCHAR(255) NOT NULL);\
+Query OK, 0 rows affected (0.01 sec)\
+\
+\
+\cf4 KegDrivers\
+Used to store what kegs are currently being carried by which drivers.\cf2 \
+mysql> CREATE TABLE KegDrivers(driverID INT NOT NULL, kegID VARCHAR(255) NOT NULL);\
+Query OK, 0 rows affected (0.01 sec)\
+\
+\
+\cf4 The Keg History Table\
+Used to store the history of when, where and by who each keg was picked up and dropped off.\cf2 \
+mysql> CREATE TABLE KegHistory(id VARCHAR(255) NOT NULL, DriverID int NOT NULL, PickedUpAtLat DOUBLE, PickedUpAtLon DOUBLE, PickedUpTime DATETIME, DroppedAtLat DOUBLE, DroppedAtLon DOUBLE, DroppedAtTime DATETIME);\
+Query OK, 0 rows affected (0.02 sec)\
+\
+}
