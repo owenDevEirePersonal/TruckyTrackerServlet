@@ -94,6 +94,10 @@ public class TTServlet extends HttpServlet
 				getLocationsWithin(request.getParameter("id"), inCentreLat, inCentreLon, inRadius);
 			break;
 			
+			case "getkegslastlocations":
+				getKegsLastLocations();
+				break;
+			
 			case "getitemids":
 				//out.print("Attempting To Get Ids");
 				getItemIds();
@@ -250,6 +254,7 @@ public class TTServlet extends HttpServlet
 	     } //end try
 	}
 	
+	//updates a keg's data in the database when it has been scanned in the app.
 	private void storeKeg(int inID, String inKegID, double inLat, double inLon)
 	{
 		// JDBC driver name and database URL
@@ -379,14 +384,16 @@ public class TTServlet extends HttpServlet
 
 	        	 
 	         }
-	         //[Update History Table and the table of keg currently being transported by drivers]
+	         //[/Update History Table and the table of keg currently being transported by drivers]
 	         }
 	         
-
+	         
 	         // Clean-up environment
 	         rs.close();
 	         stmt.close();
 	         conn.close();
+	         
+	         out.println("Done Storing Keg");
 	    }
 	    catch(SQLException se)
 	    {
@@ -572,6 +579,117 @@ public class TTServlet extends HttpServlet
 	        	 
 	        	 DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 	        	 obj.put("timestamp", format.format(returnTimeStamps.get(i)));
+	        	       	 
+	        	 jsonOut.add(obj);
+	        	 i++;
+	         }
+	         //out.println("Returning IDS");
+	         out.println(jsonOut);
+
+	         // Clean-up environment
+	         rs.close();
+	         stmt.close();
+	         conn.close();
+	    }
+	    catch(SQLException se)
+	    {
+	         //Handle errors for JDBC
+	         se.printStackTrace();
+	    }
+	    catch(Exception e)
+	    {
+	         //Handle errors for Class.forName
+	         e.printStackTrace();
+	    }
+	    finally
+	    {
+	         //finally block used to close resources
+	         try
+	         {
+	            if(stmt!=null){stmt.close();};
+	         }
+	         catch(SQLException se2)
+	         {
+	         }// nothing we can do
+	         try
+	         {
+	            if(conn!=null){conn.close();}
+	         }
+	         catch(SQLException se)
+	         {
+	            se.printStackTrace();
+	         }//end finally try
+	     } //end try
+	    //out.println("End of Init Locations");
+	}
+	
+	private void getKegsLastLocations()
+	{
+		ArrayList<Double> returnLats = new ArrayList<Double>();
+		ArrayList<Double> returnLons = new ArrayList<Double>();
+		ArrayList<String> returnIds = new ArrayList<String>();
+		// JDBC driver name and database URL
+	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackdatabase";
+	    
+	    //  Database credentials
+	    final String USER = "user";
+	    final String PASS = "";
+	    Statement stmt = null;
+	    Connection conn = null;
+	    
+	    //out.println("InitLocations");
+	    
+	    try
+	    {
+	         // Register JDBC driver
+	         Class.forName("com.mysql.jdbc.Driver");
+
+	         // Open a connection
+	         conn = DriverManager.getConnection(DB_URL, USER, PASS);
+
+	         // Execute SQL query
+	         stmt = conn.createStatement();
+	         String sql;
+	         //get the id and drop location of the latest entry for any keg that isn't currently being transported(i.e. has a droppedat of null)
+	         sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL;";
+	         //out.println(sql);
+	         ResultSet rs = stmt.executeQuery(sql);
+
+	         // Extract data from result set
+	         while(rs.next())
+	         {
+	            //Retrieve by column name
+	            returnIds.add(rs.getString("id"));
+	            returnLats.add(rs.getDouble("DroppedAtLat"));
+	            returnLons.add(rs.getDouble("DroppedAtLon"));
+	                     	                        
+	         }
+	         
+	         //get the id of every keg currently being transported by a driver, and the location of said driver.
+	         sql = "select t2.kegID, loc.lat, loc.lon from locations AS loc INNER JOIN kegdrivers AS t2 ON loc.id = t2.driverID WHERE loc.timestamp = (SELECT MAX(t3.timestamp) FROM locations t3 WHERE t3.id = loc.id);";
+	         //out.println(sql);
+	         rs = stmt.executeQuery(sql);
+
+	         // Extract data from result set
+	         while(rs.next())
+	         {
+	            //Retrieve by column name
+	            returnIds.add(rs.getString("t2.kegID"));
+	            returnLats.add(rs.getDouble("loc.lat"));
+	            returnLons.add(rs.getDouble("loc.lon"));         	                        
+	         }
+	         
+	         
+	         JSONArray jsonOut = new JSONArray();
+	         int i = 0;
+	         for(String aID: returnIds)
+	         {
+	        	 JSONObject obj = new JSONObject();
+	        	 obj.put("kegID", aID);
+	        	 obj.put("lat", returnLats.get(i));
+	        	 obj.put("lon", returnLons.get(i));
+	        	 
 	        	       	 
 	        	 jsonOut.add(obj);
 	        	 i++;
