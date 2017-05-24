@@ -5,8 +5,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.*;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+
 import org.json.simple.*;
 
 import javax.servlet.ServletConfig;
@@ -101,6 +104,22 @@ public class TTServlet extends HttpServlet
 			case "getitemids":
 				//out.print("Attempting To Get Ids");
 				getItemIds();
+			break;
+			
+			case "getkegslastlocationsonadate":
+				if(request.getParameter("date") != null)
+				{
+					String date = request.getParameter("date");
+					getKegsLastLocationsOnADate(date);
+				}
+			break;
+			
+			case "getkegsalllocationsonadate":
+				if(request.getParameter("date") != null)
+				{
+					String date = request.getParameter("date");
+					getKegsLastLocationsOnADate(date);
+				}
 			break;
 		}
 		}
@@ -678,6 +697,230 @@ public class TTServlet extends HttpServlet
 	            returnIds.add(rs.getString("t2.kegID"));
 	            returnLats.add(rs.getDouble("loc.lat"));
 	            returnLons.add(rs.getDouble("loc.lon"));         	                        
+	         }
+	         
+	         
+	         JSONArray jsonOut = new JSONArray();
+	         int i = 0;
+	         for(String aID: returnIds)
+	         {
+	        	 JSONObject obj = new JSONObject();
+	        	 obj.put("kegID", aID);
+	        	 obj.put("lat", returnLats.get(i));
+	        	 obj.put("lon", returnLons.get(i));
+	        	 
+	        	       	 
+	        	 jsonOut.add(obj);
+	        	 i++;
+	         }
+	         //out.println("Returning IDS");
+	         out.println(jsonOut);
+
+	         // Clean-up environment
+	         rs.close();
+	         stmt.close();
+	         conn.close();
+	    }
+	    catch(SQLException se)
+	    {
+	         //Handle errors for JDBC
+	         se.printStackTrace();
+	    }
+	    catch(Exception e)
+	    {
+	         //Handle errors for Class.forName
+	         e.printStackTrace();
+	    }
+	    finally
+	    {
+	         //finally block used to close resources
+	         try
+	         {
+	            if(stmt!=null){stmt.close();};
+	         }
+	         catch(SQLException se2)
+	         {
+	         }// nothing we can do
+	         try
+	         {
+	            if(conn!=null){conn.close();}
+	         }
+	         catch(SQLException se)
+	         {
+	            se.printStackTrace();
+	         }//end finally try
+	     } //end try
+	    //out.println("End of Init Locations");
+	}
+	
+	private void getKegsLastLocationsOnADate(String inDate)
+	{
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Calendar c = Calendar.getInstance();
+        try
+        {
+        c.setTime(dateFormat.parse(inDate));    
+        }
+        catch(ParseException e)
+        {
+        	out.print("ERROR: ParseException in date parsing, date input invalid.");
+        }
+		String dayOfTheKeg = dateFormat.format(c.getTime()) + " 00:00:01";
+		c.add(Calendar.DATE, 1);
+		String dayAfterTheKeg = dateFormat.format(c.getTime()) + " 00:00:01";
+		
+		ArrayList<Double> returnLats = new ArrayList<Double>();
+		ArrayList<Double> returnLons = new ArrayList<Double>();
+		ArrayList<String> returnIds = new ArrayList<String>();
+		// JDBC driver name and database URL
+	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackdatabase";
+	    
+	    //  Database credentials
+	    final String USER = "user";
+	    final String PASS = "";
+	    Statement stmt = null;
+	    Connection conn = null;
+	    
+	    //out.println("InitLocations");
+	    
+	    try
+	    {
+	         // Register JDBC driver
+	         Class.forName("com.mysql.jdbc.Driver");
+
+	         // Open a connection
+	         conn = DriverManager.getConnection(DB_URL, USER, PASS);
+
+	         // Execute SQL query
+	         stmt = conn.createStatement();
+	         String sql;
+	         //get the id and drop location of the latest entry for any keg that isn't currently being transported(i.e. has a droppedat of null)
+	         //sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL;";
+	         sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE (t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t1.DroppedAtTime < '" + dayAfterTheKeg + "' AND t1.DroppedAtTime > '" + dayOfTheKeg +"') OR (t1.DroppedAtTime > '2017-05-11' AND t1.PickedUpTime < '" + dayAfterTheKeg +"' AND t1.PickedUpTime > '" + dayOfTheKeg +"')) );";
+	         //out.println(sql);
+	         ResultSet rs = stmt.executeQuery(sql);
+
+	         // Extract data from result set
+	         while(rs.next())
+	         {
+	            //Retrieve by column name
+	            returnIds.add(rs.getString("id"));
+	            returnLats.add(rs.getDouble("DroppedAtLat"));
+	            returnLons.add(rs.getDouble("DroppedAtLon"));
+	                     	                        
+	         }
+	         
+	         
+	         JSONArray jsonOut = new JSONArray();
+	         int i = 0;
+	         for(String aID: returnIds)
+	         {
+	        	 JSONObject obj = new JSONObject();
+	        	 obj.put("kegID", aID);
+	        	 obj.put("lat", returnLats.get(i));
+	        	 obj.put("lon", returnLons.get(i));
+	        	 
+	        	       	 
+	        	 jsonOut.add(obj);
+	        	 i++;
+	         }
+	         //out.println("Returning IDS");
+	         out.println(jsonOut);
+
+	         // Clean-up environment
+	         rs.close();
+	         stmt.close();
+	         conn.close();
+	    }
+	    catch(SQLException se)
+	    {
+	         //Handle errors for JDBC
+	         se.printStackTrace();
+	    }
+	    catch(Exception e)
+	    {
+	         //Handle errors for Class.forName
+	         e.printStackTrace();
+	    }
+	    finally
+	    {
+	         //finally block used to close resources
+	         try
+	         {
+	            if(stmt!=null){stmt.close();};
+	         }
+	         catch(SQLException se2)
+	         {
+	         }// nothing we can do
+	         try
+	         {
+	            if(conn!=null){conn.close();}
+	         }
+	         catch(SQLException se)
+	         {
+	            se.printStackTrace();
+	         }//end finally try
+	     } //end try
+	    //out.println("End of Init Locations");
+	}
+	
+	private void getAllKegsLocationsOnADate(String inDate)
+	{
+		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Calendar c = Calendar.getInstance();
+        try
+        {
+        c.setTime(dateFormat.parse(inDate));    
+        }
+        catch(ParseException e)
+        {
+        	out.print("ERROR: ParseException in date parsing, date input invalid.");
+        }
+		String dayOfTheKeg = dateFormat.format(c.getTime()) + " 00:00:01";
+		c.add(Calendar.DATE, 1);
+		String dayAfterTheKeg = dateFormat.format(c.getTime()) + " 00:00:01";
+		
+		ArrayList<Double> returnLats = new ArrayList<Double>();
+		ArrayList<Double> returnLons = new ArrayList<Double>();
+		ArrayList<String> returnIds = new ArrayList<String>();
+		// JDBC driver name and database URL
+	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackdatabase";
+	    
+	    //  Database credentials
+	    final String USER = "user";
+	    final String PASS = "";
+	    Statement stmt = null;
+	    Connection conn = null;
+	    
+	    //out.println("InitLocations");
+	    
+	    try
+	    {
+	         // Register JDBC driver
+	         Class.forName("com.mysql.jdbc.Driver");
+
+	         // Open a connection
+	         conn = DriverManager.getConnection(DB_URL, USER, PASS);
+
+	         // Execute SQL query
+	         stmt = conn.createStatement();
+	         String sql;
+	         //get the id and drop location of the latest entry for any keg that isn't currently being transported(i.e. has a droppedat of null)
+	         //sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL;";
+	         sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE ((SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t1.DroppedAtTime < '" + dayAfterTheKeg + "' AND t1.DroppedAtTime > '" + dayOfTheKeg +"') OR (t1.DroppedAtTime > '2017-05-11' AND t1.PickedUpTime < '" + dayAfterTheKeg +"' AND t1.PickedUpTime > '" + dayOfTheKeg +"')) );";
+	         //out.println(sql);
+	         ResultSet rs = stmt.executeQuery(sql);
+
+	         // Extract data from result set
+	         while(rs.next())
+	         {
+	            //Retrieve by column name
+	            returnIds.add(rs.getString("id"));
+	            returnLats.add(rs.getDouble("DroppedAtLat"));
+	            returnLons.add(rs.getDouble("DroppedAtLon"));
+	                     	                        
 	         }
 	         
 	         
