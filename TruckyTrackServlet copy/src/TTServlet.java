@@ -797,7 +797,8 @@ public class TTServlet extends HttpServlet
 	         String sql;
 	         //get the id and drop location of the latest entry for any keg that isn't currently being transported(i.e. has a droppedat of null)
 	         //sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL;";
-	         sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE (t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t1.DroppedAtTime < '" + dayAfterTheKeg + "' AND t1.DroppedAtTime > '" + dayOfTheKeg +"') OR (t1.DroppedAtTime > '2017-05-11' AND t1.PickedUpTime < '" + dayAfterTheKeg +"' AND t1.PickedUpTime > '" + dayOfTheKeg +"')) );";
+	         //sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE (t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t1.DroppedAtTime < '" + dayAfterTheKeg + "' AND t1.DroppedAtTime > '" + dayOfTheKeg +"') OR (t1.DroppedAtTime > '2017-05-11' AND t1.PickedUpTime < '" + dayAfterTheKeg +"' AND t1.PickedUpTime > '" + dayOfTheKeg +"')) );";
+	         sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE (t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t1.DroppedAtTime < '" + dayAfterTheKeg + "' AND t1.DroppedAtTime > '" + dayOfTheKeg +"')) && (SELECT t4.fullID FROM KegKeys t4 WHERE t4.fullID = t1.id) IS NOT NULL );";
 	         //out.println(sql);
 	         ResultSet rs = stmt.executeQuery(sql);
 
@@ -805,9 +806,23 @@ public class TTServlet extends HttpServlet
 	         while(rs.next())
 	         {
 	            //Retrieve by column name
-	            returnIds.add(rs.getString("id"));
+	            returnIds.add(rs.getString("id") + " Dropped Off");
 	            returnLats.add(rs.getDouble("DroppedAtLat"));
 	            returnLons.add(rs.getDouble("DroppedAtLon"));
+	                     	                        
+	         }
+	         
+	         sql = "select id, PickedUpAtLat, PickedUpAtLon from KegHistory t1 WHERE (t1.PickedUpTime = (SELECT MAX(t2.PickedUpTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t1.PickedUpTime < '" + dayAfterTheKeg + "' AND t1.PickedUpTime > '" + dayOfTheKeg +"')) && (SELECT t4.emptyID FROM KegKeys t4 WHERE t4.emptyID = t1.id) IS NOT NULL);";
+	         //out.println(sql);
+	         rs = stmt.executeQuery(sql);
+
+	         // Extract data from result set
+	         while(rs.next())
+	         {
+	            //Retrieve by column name
+	            returnIds.add(rs.getString("id") + " Picked Up");
+	            returnLats.add(rs.getDouble("PickedUpAtLat"));
+	            returnLons.add(rs.getDouble("PickedUpAtLon"));
 	                     	                        
 	         }
 	         
@@ -817,7 +832,7 @@ public class TTServlet extends HttpServlet
 	         for(String aID: returnIds)
 	         {
 	        	 JSONObject obj = new JSONObject();
-	        	 obj.put("kegID", aID);
+	        	 obj.put("kegID", aID );
 	        	 obj.put("lat", returnLats.get(i));
 	        	 obj.put("lon", returnLons.get(i));
 	        	 
@@ -920,6 +935,20 @@ public class TTServlet extends HttpServlet
 	            returnIds.add(rs.getString("id"));
 	            returnLats.add(rs.getDouble("DroppedAtLat"));
 	            returnLons.add(rs.getDouble("DroppedAtLon"));
+	                     	                        
+	         }
+	         
+	         sql = "select id, PickedUpAtLat, PickedUpAtLon from KegHistory t1 WHERE (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t1.PickedUpTime < '" + dayAfterTheKeg + "' AND t1.PickedUpTime > '" + dayOfTheKeg +"')) && (SELECT t4.emptyID FROM KegKeys t4 WHERE t4.emptyID = t1.id) IS NOT NULL);";
+	         //out.println(sql);
+	         rs = stmt.executeQuery(sql);
+
+	         // Extract data from result set
+	         while(rs.next())
+	         {
+	            //Retrieve by column name
+	            returnIds.add(rs.getString("id") + " Picked Up");
+	            returnLats.add(rs.getDouble("PickedUpAtLat"));
+	            returnLons.add(rs.getDouble("PickedUpAtLon"));
 	                     	                        
 	         }
 	         
