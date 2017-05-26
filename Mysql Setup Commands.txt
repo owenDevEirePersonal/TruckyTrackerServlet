@@ -1,0 +1,37 @@
+CREATE DATABASE truckytrackDatabase;
+
+use truckytrackDatabase;
+
+
+create table IDs(id int not null, name varchar (255));
+
+
+
+create table Locations(id INT, lat DOUBLE, lon DOUBLE, timestamp DATETIME, Note1 VARCHAR(255), Note2 VARCHAR(255));
+
+
+
+CREATE TABLE KegKeys(fullID VARCHAR(255) NOT NULL, emptyID VARCHAR(255) NOT NULL);
+
+
+CREATE TABLE KegDrivers(driverID INT NOT NULL, kegID VARCHAR(255) NOT NULL);
+
+CREATE TABLE KegHistory(id VARCHAR(255) NOT NULL, DriverID int NOT NULL, PickedUpAtLat DOUBLE, PickedUpAtLon DOUBLE, PickedUpTime DATETIME, DroppedAtLat DOUBLE, DroppedAtLon DOUBLE, DroppedAtTime DATETIME);
+
+
+
+Insert into ids(id, name) VALUES (1, '1 - Jims Truck');
+
+Insert into KegKeys(fullID, emptyID) VALUES ('a10', 'a11');
+Insert into KegKeys(fullID, emptyID) VALUES ('a12', 'a13');
+Insert into KegKeys(fullID, emptyID) VALUES ('a14', 'a15');
+Insert into KegKeys(fullID, emptyID) VALUES ('a16', 'a17');
+
+insert into KegHistory(id, DriverID, PickedUpAtLat, PickedUpAtLon, PickedUpTime, DroppedAtLat, DroppedAtLon, DroppedAtTime) VALUES ('a10', '1', '52.5', '-8.0', '2017-05-10 01:00:00', '52.67', '-8.53', '2017-05-10 02:00:00');
+
+insert into KegHistory(id, DriverID, PickedUpAtLat, PickedUpAtLon, PickedUpTime, DroppedAtLat, DroppedAtLon, DroppedAtTime) VALUES ('a12', '1', '52.5', '-8.0', '2017-05-10 01:00:00', '52.675', '-8.535', '2017-05-10 03:00:00');
+
+insert into KegHistory(id, DriverID, PickedUpAtLat, PickedUpAtLon, PickedUpTime, DroppedAtLat, DroppedAtLon, DroppedAtTime) VALUES ('a15', '1', '52.68', '-8.54', '2017-05-10 03:00:00', '52.5', '-8.0', '2017-05-10 05:00:00');
+
+insert into KegHistory(id, DriverID, PickedUpAtLat, PickedUpAtLon, PickedUpTime, DroppedAtLat, DroppedAtLon, DroppedAtTime) VALUES ('a17', '1', '52.5', '-8.0', '2017-05-10 04:00:00', '52.64', '-8.54', '2017-05-10 05:00:00');
+

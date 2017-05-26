@@ -118,7 +118,7 @@ public class TTServlet extends HttpServlet
 				if(request.getParameter("date") != null)
 				{
 					String date = request.getParameter("date");
-					getKegsLastLocationsOnADate(date);
+					getAllKegsLocationsOnADate(date);
 				}
 			break;
 		}
@@ -160,7 +160,7 @@ public class TTServlet extends HttpServlet
 	         // Execute SQL query
 	         stmt = conn.createStatement();
 	         String sql;
-	         sql = "SELECT DISTINCT id FROM ids;";
+	         sql = "SELECT DISTINCT id FROM IDs;";
 	         ResultSet rs = stmt.executeQuery(sql);
 	         
 	         ArrayList<Integer> returnIds = new ArrayList<Integer>();
@@ -192,7 +192,7 @@ public class TTServlet extends HttpServlet
 	        	if(inName == null)
 	        	{
 	        		//out.print(inID);
-	        		sql = "INSERT INTO ids VALUES (" + inID + ", '" + inID + " - Truck " + inID + "');";
+	        		sql = "INSERT INTO IDs VALUES (" + inID + ", '" + inID + " - Truck " + inID + "');";
 	        		
 	        		//out.print("not exists with no name " + sql);
 	        	}
@@ -202,7 +202,7 @@ public class TTServlet extends HttpServlet
 	        		inName = inName.replace("_", " ");
 	        		//replaces any occurances of ' as ' marks the end and start of varchars in mysql and would disrupt the sql statement.
 	        	
-	        		sql = "INSERT INTO ids VALUES (" + inID + ", '" + inID + " - " + inName + "');";
+	        		sql = "INSERT INTO IDs VALUES (" + inID + ", '" + inID + " - " + inName + "');";
 	        		//out.print("not exists " + sql);
 	        	}
 	        	stmt.executeUpdate(sql);
@@ -221,7 +221,7 @@ public class TTServlet extends HttpServlet
 		        	inName = inName.replace("_", " ");
 		        	//replaces any occurances of ' as ' marks the end and start of varchars in mysql and would disrupt the sql statement.
 		        
-		        	sql = "UPDATE ids SET name='" + inID + " - " + inName + "' WHERE id = " + inID + ";";
+		        	sql = "UPDATE IDs SET name='" + inID + " - " + inName + "' WHERE id = " + inID + ";";
 		        	//out.print("not exists " + sql);
 		        }
 		        stmt.executeUpdate(sql);
@@ -230,7 +230,7 @@ public class TTServlet extends HttpServlet
 	         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	         java.util.Date currentTimeStamp = new java.util.Date();
 
-	         sql = "INSERT INTO locations (id, lat, lon, timestamp, Note1, Note2) VALUES (" + inID + ", " + inLat + ", " + inLon + ", '" + dateFormat.format(currentTimeStamp) + "', '', '');";
+	         sql = "INSERT INTO Locations (id, lat, lon, timestamp, Note1, Note2) VALUES (" + inID + ", " + inLat + ", " + inLon + ", '" + dateFormat.format(currentTimeStamp) + "', '', '');";
 	         //out.println(sql);
 	         stmt.executeUpdate(sql);
 	         //out.print("insert is " + sql);
@@ -303,7 +303,7 @@ public class TTServlet extends HttpServlet
 	         // Execute SQL query
 	         stmt = conn.createStatement();
 	         String sql;
-	         sql = "SELECT DISTINCT id FROM ids;";
+	         sql = "SELECT DISTINCT id FROM IDs;";
 	         ResultSet rs = stmt.executeQuery(sql);
 	         
 	         ArrayList<Integer> returnIds = new ArrayList<Integer>();
@@ -470,7 +470,7 @@ public class TTServlet extends HttpServlet
 	         // Execute SQL query
 	         stmt = conn.createStatement();
 	         String sql;
-	         sql = "SELECT id, name FROM ids;";
+	         sql = "SELECT id, name FROM IDs;";
 	         ResultSet rs = stmt.executeQuery(sql);
 
 	         // Extract data from result set
@@ -564,7 +564,7 @@ public class TTServlet extends HttpServlet
 	         // Execute SQL query
 	         stmt = conn.createStatement();
 	         String sql;
-	         sql = "select * from locations WHERE id=" + inID + " ORDER BY timestamp ASC Limit " +  inCount + ";";
+	         sql = "select * from Locations WHERE id=" + inID + " ORDER BY timestamp ASC Limit " +  inCount + ";";
 	         //out.println(sql);
 	         ResultSet rs = stmt.executeQuery(sql);
 
@@ -686,7 +686,7 @@ public class TTServlet extends HttpServlet
 	         }
 	         
 	         //get the id of every keg currently being transported by a driver, and the location of said driver.
-	         sql = "select t2.kegID, loc.lat, loc.lon from locations AS loc INNER JOIN kegdrivers AS t2 ON loc.id = t2.driverID WHERE loc.timestamp = (SELECT MAX(t3.timestamp) FROM locations t3 WHERE t3.id = loc.id);";
+	         sql = "select t2.kegID, loc.lat, loc.lon from Locations AS loc INNER JOIN KegDrivers AS t2 ON loc.id = t2.driverID WHERE loc.timestamp = (SELECT MAX(t3.timestamp) FROM Locations t3 WHERE t3.id = loc.id);";
 	         //out.println(sql);
 	         rs = stmt.executeQuery(sql);
 
@@ -798,7 +798,7 @@ public class TTServlet extends HttpServlet
 	         //get the id and drop location of the latest entry for any keg that isn't currently being transported(i.e. has a droppedat of null)
 	         //sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL;";
 	         //sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE (t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t1.DroppedAtTime < '" + dayAfterTheKeg + "' AND t1.DroppedAtTime > '" + dayOfTheKeg +"') OR (t1.DroppedAtTime > '2017-05-11' AND t1.PickedUpTime < '" + dayAfterTheKeg +"' AND t1.PickedUpTime > '" + dayOfTheKeg +"')) );";
-	         sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE (t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t1.DroppedAtTime < '" + dayAfterTheKeg + "' AND t1.DroppedAtTime > '" + dayOfTheKeg +"')) && (SELECT t4.fullID FROM KegKeys t4 WHERE t4.fullID = t1.id) IS NOT NULL );";
+	         sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE (t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t2.DroppedAtTime < '" + dayAfterTheKeg + "' AND t2.DroppedAtTime > '" + dayOfTheKeg +"')) AND (SELECT t4.fullID FROM KegKeys t4 WHERE t4.fullID = t1.id) IS NOT NULL ));";
 	         //out.println(sql);
 	         ResultSet rs = stmt.executeQuery(sql);
 
@@ -812,7 +812,7 @@ public class TTServlet extends HttpServlet
 	                     	                        
 	         }
 	         
-	         sql = "select id, PickedUpAtLat, PickedUpAtLon from KegHistory t1 WHERE (t1.PickedUpTime = (SELECT MAX(t2.PickedUpTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t1.PickedUpTime < '" + dayAfterTheKeg + "' AND t1.PickedUpTime > '" + dayOfTheKeg +"')) && (SELECT t4.emptyID FROM KegKeys t4 WHERE t4.emptyID = t1.id) IS NOT NULL);";
+	         sql = "select id, PickedUpAtLat, PickedUpAtLon from KegHistory t1 WHERE (t1.PickedUpTime = (SELECT MAX(t2.PickedUpTime) FROM KegHistory t2 WHERE t2.id = t1.id AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t2.PickedUpTime < '" + dayAfterTheKeg + "' AND t2.PickedUpTime > '" + dayOfTheKeg +"')) AND (SELECT t4.emptyID FROM KegKeys t4 WHERE t4.emptyID = t1.id) IS NOT NULL));";
 	         //out.println(sql);
 	         rs = stmt.executeQuery(sql);
 
@@ -924,7 +924,7 @@ public class TTServlet extends HttpServlet
 	         String sql;
 	         //get the id and drop location of the latest entry for any keg that isn't currently being transported(i.e. has a droppedat of null)
 	         //sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL;";
-	         sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE ((SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t1.DroppedAtTime < '" + dayAfterTheKeg + "' AND t1.DroppedAtTime > '" + dayOfTheKeg +"') OR (t1.DroppedAtTime > '2017-05-11' AND t1.PickedUpTime < '" + dayAfterTheKeg +"' AND t1.PickedUpTime > '" + dayOfTheKeg +"')) );";
+	         sql = "select id, DroppedAtLat, DroppedAtLon from KegHistory t1 WHERE (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND (t1.DroppedAtTime < '" + dayAfterTheKeg + "' AND t1.DroppedAtTime > '" + dayOfTheKeg +"') AND (SELECT t4.fullID FROM KegKeys t4 WHERE t4.fullID = t1.id) IS NOT NULL;";
 	         //out.println(sql);
 	         ResultSet rs = stmt.executeQuery(sql);
 
@@ -938,7 +938,7 @@ public class TTServlet extends HttpServlet
 	                     	                        
 	         }
 	         
-	         sql = "select id, PickedUpAtLat, PickedUpAtLon from KegHistory t1 WHERE (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND ((t1.PickedUpTime < '" + dayAfterTheKeg + "' AND t1.PickedUpTime > '" + dayOfTheKeg +"')) && (SELECT t4.emptyID FROM KegKeys t4 WHERE t4.emptyID = t1.id) IS NOT NULL);";
+	         sql = "select id, PickedUpAtLat, PickedUpAtLon from KegHistory t1 WHERE (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL AND (t1.PickedUpTime < '" + dayAfterTheKeg + "' AND t1.PickedUpTime > '" + dayOfTheKeg + "') AND (SELECT t4.emptyID FROM KegKeys t4 WHERE t4.emptyID = t1.id) IS NOT NULL;";
 	         //out.println(sql);
 	         rs = stmt.executeQuery(sql);
 
@@ -1038,7 +1038,7 @@ public class TTServlet extends HttpServlet
 	         // Execute SQL query
 	         stmt = conn.createStatement();
 	         String sql;
-	         sql = "select * from locations where id=" + inID + " AND (lat < ("+ (inCentreLat + inRadius) +") AND lat > ("+ (inCentreLat - inRadius) +")) AND (lon < ("+ (inCentreLon + inRadius) +") AND lon > ("+ (inCentreLon - inRadius) +"));";
+	         sql = "select * from Locations where id=" + inID + " AND (lat < ("+ (inCentreLat + inRadius) +") AND lat > ("+ (inCentreLat - inRadius) +")) AND (lon < ("+ (inCentreLon + inRadius) +") AND lon > ("+ (inCentreLon - inRadius) +"));";
 	         //out.println(sql);
 	         ResultSet rs = stmt.executeQuery(sql);
 
