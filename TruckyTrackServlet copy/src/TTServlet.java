@@ -121,6 +121,14 @@ public class TTServlet extends HttpServlet
 					getAllKegsLocationsOnADate(date);
 				}
 			break;
+			
+			case "getkegdata":
+				if(request.getParameter("kegid") != null)
+				{
+					String kegID = request.getParameter("kegid");
+					getKegData(kegID);
+				}
+			break;
 		}
 		}
 		else
@@ -344,14 +352,14 @@ public class TTServlet extends HttpServlet
 	         	while(rs.next())
 	         	{
 	         		//Retrieve by column name
-	         		//out.print("checking id " + rs.getInt("id"));
+	         		//out.print("checking id " + rs.getInt("fullID"));
 	         		currentFullID = rs.getString("fullID");
 	         		currentEmptyID = rs.getString("emptyID");
-	         		//out.println("  &: id " + currentID + " is a to " + inID);
+	         		//out.println("  &: id " + currentFullID + " is a to " + inID);
 	         		kegIdExists = true;
 	         		if(currentFullID.matches(inKegID))
 	         		{
-	         			//out.println("id " + currentID + " is equal to " + inID);
+	         			//out.println("id " + currentFullID + " is equal to " + inID);
 	         			kegIsFull = true;
 	         			break;
 	         		}
@@ -380,6 +388,7 @@ public class TTServlet extends HttpServlet
 	         	{
 	         		if(kegIsInKegDrivers)
 	         		{
+	         			out.println("ids exist and is in keg drivers");
 	         			//keg is being dropped off and is therefore removed from KegDrivers.
 	         			sql = "DELETE FROM KegDrivers WHERE (kegID = '" + inKegID + "');";
 	         			//out.println(sql);
@@ -391,6 +400,7 @@ public class TTServlet extends HttpServlet
 	         		}
 	         		else
 	         		{
+	         			out.println("ids exist and is NOT in keg drivers");
 	         			//keg is being picked up and is therefore added to Kegdrivers.
 	         			sql = "INSERT INTO KegDrivers (DriverID, KegID) VALUES (" + inID + ", '" + inKegID + "');";
 	         			//out.println(sql);
@@ -402,7 +412,11 @@ public class TTServlet extends HttpServlet
 	         		}
 
 	        	 
-	         }
+	         	}
+	         	else
+	         	{
+	         		out.println("ids do not exist");
+	         	}
 	         //[/Update History Table and the table of keg currently being transported by drivers]
 	         }
 	         
@@ -1075,6 +1089,125 @@ public class TTServlet extends HttpServlet
 	         }
 	         //out.println("Returning IDS");
 	         out.println(jsonOut);
+
+	         // Clean-up environment
+	         rs.close();
+	         stmt.close();
+	         conn.close();
+	    }
+	    catch(SQLException se)
+	    {
+	         //Handle errors for JDBC
+	         se.printStackTrace();
+	    }
+	    catch(Exception e)
+	    {
+	         //Handle errors for Class.forName
+	         e.printStackTrace();
+	    }
+	    finally
+	    {
+	         //finally block used to close resources
+	         try
+	         {
+	            if(stmt!=null){stmt.close();};
+	         }
+	         catch(SQLException se2)
+	         {
+	         }// nothing we can do
+	         try
+	         {
+	            if(conn!=null){conn.close();}
+	         }
+	         catch(SQLException se)
+	         {
+	            se.printStackTrace();
+	         }//end finally try
+	     } //end try
+	    //out.println("End of Init Locations");
+	}
+	
+	private void getKegData(String kegID)
+	{
+		ArrayList<Double> returnLats = new ArrayList<Double>();
+		ArrayList<Double> returnLons = new ArrayList<Double>();
+		ArrayList<String> returnIds = new ArrayList<String>();
+		String returnData = "";
+		// JDBC driver name and database URL
+	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackdatabase";
+	    
+	    //  Database credentials
+	    final String USER = "user";
+	    final String PASS = "";
+	    Statement stmt = null;
+	    Connection conn = null;
+	    
+	    //out.println("InitLocations");
+	    
+	    try
+	    {
+	         // Register JDBC driver
+	         Class.forName("com.mysql.jdbc.Driver");
+
+	         // Open a connection
+	         conn = DriverManager.getConnection(DB_URL, USER, PASS);
+
+	         // Execute SQL query
+	         stmt = conn.createStatement();
+	         
+	         String sql;
+	         //get the id and drop location of the latest entry for any keg that isn't currently being transported(i.e. has a droppedat of null)
+	         sql = "select * from KegKeys WHERE fullID = '" + kegID + "' OR emptyID = '" + kegID + "';";
+	         //out.println(sql);
+	         ResultSet rs = stmt.executeQuery(sql);
+
+	         // Extract data from result set
+	         while(rs.next())
+	         {
+	            if(rs.getString("fullID").matches(kegID))
+	            {
+	            	returnData += "Full ";
+	            }
+	            else
+	            {
+	            	returnData += "Empty ";
+	            }
+	                     	                        
+	         }
+	         
+	         //get the id and drop location of the latest entry for any keg that isn't currently being transported(i.e. has a droppedat of null)
+	         sql = "select * from KegHistory t1 WHERE t1.DroppedAtTime = (SELECT MAX(t2.DroppedAtTime) FROM KegHistory t2 WHERE t2.id = t1.id) AND t1.id ='" + kegID + "' AND (SELECT t3.id FROM KegHistory t3 WHERE t3.id = t1.id AND t3.DroppedAtTime IS NULL) IS NULL;";
+	         //out.println(sql);
+	         rs = stmt.executeQuery(sql);
+
+	         // Extract data from result set
+	         while(rs.next())
+	         {
+	            //Retrieve by column name
+	        	 returnData += "keg with ID: "  + rs.getString("id");
+	        	 returnData += " was Picked up at: (" + rs.getDouble("PickedUpAtLat") + " , " + rs.getDouble("PickedUpAtLon") + ") at " + rs.getString("PickedUpTime");
+	            returnData += " then Dropped at: (" + rs.getDouble("DroppedAtLat") + " , " + rs.getDouble("DroppedAtLon") + ") at " + rs.getString("DroppedAtTime");
+	            returnData += " by Driver: " + rs.getString("driverID");
+	            
+	                     	                        
+	         }
+	         
+	         //get the id of every keg currently being transported by a driver, and the location of said driver.
+	         sql = "select t2.kegID, loc.lat, loc.lon, loc.timestamp, loc.id from Locations AS loc INNER JOIN KegDrivers AS t2 ON loc.id = t2.driverID WHERE loc.timestamp = (SELECT MAX(t3.timestamp) FROM Locations t3 WHERE t3.id = loc.id) AND t2.kegID = '" + kegID + "';";
+	         //out.println(sql);
+	         rs = stmt.executeQuery(sql);
+
+	         // Extract data from result set
+	         while(rs.next())
+	         {
+	            //Retrieve by column name
+	            returnData += "keg with ID: " + rs.getString("t2.kegID") + " is being transported by truck " + rs.getString("loc.id") + " currently at (" + rs.getDouble("loc.lat") + " , " + rs.getDouble("loc.lon") + ") at " + rs.getString("loc.timestamp");
+	            
+	         }
+
+	         //out.println("Returning IDS");
+	         out.println(returnData);
 
 	         // Clean-up environment
 	         rs.close();
