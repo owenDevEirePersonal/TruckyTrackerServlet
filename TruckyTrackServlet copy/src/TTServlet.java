@@ -97,6 +97,16 @@ public class TTServlet extends HttpServlet
 				getLocationsWithin(request.getParameter("id"), inCentreLat, inCentreLon, inRadius);
 			break;
 			
+			case "getlocationsbetweendates":
+				//NB: apply date input checking to make sure startdate is before enddate.
+				if(request.getParameter("startdate") != null && request.getParameter("enddate") != null && request.getParameter("startdate") != null)
+				{
+					String startDate = request.getParameter("startdate");
+					String endDate = request.getParameter("enddate");
+					getLocationsBetweenDates(request.getParameter("id"), startDate, endDate);
+				}
+			break;
+			
 			case "getkegslastlocations":
 				getKegsLastLocations();
 				break;
@@ -129,6 +139,8 @@ public class TTServlet extends HttpServlet
 					getKegData(kegID);
 				}
 			break;
+			
+			default: out.println("Error: Unknown Command"); break;
 		}
 		}
 		else
@@ -147,7 +159,7 @@ public class TTServlet extends HttpServlet
 	{
 		// JDBC driver name and database URL
 	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
-	    final String DB_URL="jdbc:mysql://localhost/truckytrackdatabase";
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackDatabase";
 	    
 	    //  Database credentials
 	    final String USER = "user";
@@ -286,7 +298,7 @@ public class TTServlet extends HttpServlet
 	{
 		// JDBC driver name and database URL
 	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
-	    final String DB_URL="jdbc:mysql://localhost/truckytrackdatabase";
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackDatabase";
 	    
 	    //  Database credentials
 	    final String USER = "user";
@@ -465,7 +477,7 @@ public class TTServlet extends HttpServlet
 		ArrayList<Integer> returnIds = new ArrayList<Integer>();
 		// JDBC driver name and database URL
 	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
-	    final String DB_URL="jdbc:mysql://localhost/truckytrackdatabase";
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackDatabase";
 	    
 	    //  Database credentials
 	    final String USER = "user";
@@ -557,7 +569,7 @@ public class TTServlet extends HttpServlet
 		ArrayList<Integer> returnIds = new ArrayList<Integer>();
 		// JDBC driver name and database URL
 	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
-	    final String DB_URL="jdbc:mysql://localhost/truckytrackdatabase";
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackDatabase";
 	    
 	    //  Database credentials
 	    final String USER = "user";
@@ -663,7 +675,7 @@ public class TTServlet extends HttpServlet
 		ArrayList<String> returnIds = new ArrayList<String>();
 		// JDBC driver name and database URL
 	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
-	    final String DB_URL="jdbc:mysql://localhost/truckytrackdatabase";
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackDatabase";
 	    
 	    //  Database credentials
 	    final String USER = "user";
@@ -788,7 +800,7 @@ public class TTServlet extends HttpServlet
 		ArrayList<String> returnIds = new ArrayList<String>();
 		// JDBC driver name and database URL
 	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
-	    final String DB_URL="jdbc:mysql://localhost/truckytrackdatabase";
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackDatabase";
 	    
 	    //  Database credentials
 	    final String USER = "user";
@@ -915,7 +927,7 @@ public class TTServlet extends HttpServlet
 		ArrayList<String> returnIds = new ArrayList<String>();
 		// JDBC driver name and database URL
 	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
-	    final String DB_URL="jdbc:mysql://localhost/truckytrackdatabase";
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackDatabase";
 	    
 	    //  Database credentials
 	    final String USER = "user";
@@ -1031,7 +1043,7 @@ public class TTServlet extends HttpServlet
 		ArrayList<Integer> returnIds = new ArrayList<Integer>();
 		// JDBC driver name and database URL
 	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
-	    final String DB_URL="jdbc:mysql://localhost/truckytrackdatabase";
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackDatabase";
 	    
 	    //  Database credentials
 	    final String USER = "user";
@@ -1127,6 +1139,133 @@ public class TTServlet extends HttpServlet
 	    //out.println("End of Init Locations");
 	}
 	
+	//returns the data for every location entry with matching id that is between 2 dates.
+	private void getLocationsBetweenDates(String inID, String startDate, String endDate)
+	{
+		ArrayList<String> returnNotes1 = new ArrayList<String>();
+		ArrayList<String> returnNotes2 = new ArrayList<String>();
+		ArrayList<Double> returnLats = new ArrayList<Double>();
+		ArrayList<Double> returnLons = new ArrayList<Double>();
+		ArrayList<java.util.Date> returnTimeStamps = new ArrayList<java.util.Date>();
+		ArrayList<Integer> returnIds = new ArrayList<Integer>();
+		// JDBC driver name and database URL
+	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackDatabase";
+	   
+	    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	    Calendar c = Calendar.getInstance();
+	    try
+	    {
+        c.setTime(dateFormat.parse(startDate));    
+        }
+        catch(ParseException e)
+        {
+        	out.print("ERROR: ParseException in date parsing, date input invalid.");
+        }
+		String startDay = dateFormat.format(c.getTime()) + " 00:00:01";
+		
+		try
+        {
+        c.setTime(dateFormat.parse(endDate));    
+        }
+        catch(ParseException e)
+        {
+        	out.print("ERROR: ParseException in date parsing, date input invalid.");
+        }
+		String endDay = dateFormat.format(c.getTime()) + " 00:00:01";
+	    
+	    //  Database credentials
+	    final String USER = "user";
+	    final String PASS = "";
+	    Statement stmt = null;
+	    Connection conn = null;
+		    
+	    //out.println("InitLocations");
+		    
+	    try
+	    {
+	         // Register JDBC driver
+	         Class.forName("com.mysql.jdbc.Driver");
+
+	         // Open a connection
+		     conn = DriverManager.getConnection(DB_URL, USER, PASS);
+
+	         // Execute SQL query
+	         stmt = conn.createStatement();
+	         String sql;
+	         sql = "select * from Locations where id=" + inID + " AND timestamp > \"" + startDay + "\" AND timestamp < \"" + endDay + "\";";
+	         //out.println(sql);
+	         ResultSet rs = stmt.executeQuery(sql);
+
+	         // Extract data from result set
+	         while(rs.next())
+	         {
+	            //Retrieve by column name
+	            returnIds.add(rs.getInt("id"));
+	            returnLats.add(rs.getDouble("lat"));
+	            returnLons.add(rs.getDouble("lon"));
+	            java.util.Date adate = rs.getTimestamp("timestamp");
+	            returnTimeStamps.add(adate);
+	            returnNotes1.add(rs.getString("Note1"));
+	            returnNotes2.add(rs.getString("Note2"));
+		            
+	         }
+		         
+	         JSONArray jsonOut = new JSONArray();
+	         int i = 0;
+	         for(int aID: returnIds)
+	         {
+	        	 JSONObject obj = new JSONObject();
+	        	 obj.put("id", aID);
+	        	 obj.put("lat", returnLats.get(i));
+	        	 obj.put("lon", returnLons.get(i));
+	        	 DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+	        	 obj.put("timestamp", format.format(returnTimeStamps.get(i)));
+	        	 obj.put("Note1", returnNotes1.get(i));
+	        	 obj.put("Note2", returnNotes2.get(i));
+	        	 jsonOut.add(obj);
+	        	 i++;
+	         }
+	         //out.println("Returning IDS");
+	         out.println(jsonOut);
+
+	         // Clean-up environment
+	         rs.close();
+	         stmt.close();
+	         conn.close();
+	    }
+	    catch(SQLException se)
+	    {
+	         //Handle errors for JDBC
+	         se.printStackTrace();
+	    }
+	    catch(Exception e)
+	    {
+	         //Handle errors for Class.forName
+	         e.printStackTrace();
+	    }
+	    finally
+	    {
+	         //finally block used to close resources
+	         try
+	         {
+	            if(stmt!=null){stmt.close();};
+	         }
+	         catch(SQLException se2)
+	         {
+	         }// nothing we can do
+	         try
+	         {
+	            if(conn!=null){conn.close();}
+	         }
+	         catch(SQLException se)
+	         {
+	            se.printStackTrace();
+	         }//end finally try
+	     } //end try
+	    //out.println("End of Init Locations");
+	}
+	
 	private void getKegData(String kegID)
 	{
 		ArrayList<Double> returnLats = new ArrayList<Double>();
@@ -1135,7 +1274,7 @@ public class TTServlet extends HttpServlet
 		String returnData = "";
 		// JDBC driver name and database URL
 	    final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
-	    final String DB_URL="jdbc:mysql://localhost/truckytrackdatabase";
+	    final String DB_URL="jdbc:mysql://localhost/truckytrackDatabase";
 	    
 	    //  Database credentials
 	    final String USER = "user";
@@ -1161,6 +1300,11 @@ public class TTServlet extends HttpServlet
 	         sql = "select * from KegKeys WHERE fullID = '" + kegID + "' OR emptyID = '" + kegID + "';";
 	         //out.println(sql);
 	         ResultSet rs = stmt.executeQuery(sql);
+	         if(!rs.next())
+	         {
+	        	 out.println("Error: ID not found");
+	         }
+	         rs.beforeFirst();
 
 	         // Extract data from result set
 	         while(rs.next())
